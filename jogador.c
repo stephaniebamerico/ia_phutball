@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   no->filhos = NULL;
   no->p_bola = tam_campo/2;
   no->t_campo = tam_campo;
-  minimax(no, 1, true);
+  minimax(no, 2, true);
   libera_no(&no);
   
   // prepara um string com o movimento

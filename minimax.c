@@ -10,24 +10,31 @@ int heuristica(No *no) {
 }
 
 int minimax(No *no, int profundidade, bool maximizador) {
+  printf("\n***\n novo campo %s\n", no->campo);
+  printf("Profundidade: %d\n", profundidade);
   if(no->p_bola == -1 || no->p_bola == no->t_campo || profundidade == 0)
     return heuristica(no);
+    
+  // Gera um filho para cada jogada possivel
+  // "o": acao de mover a bola
+  gera_pulos_direcao(&no, true); // esquerda
+  gera_pulos_direcao(&no, false); // direita
 
+  // "f": acao  de inserir um  novo filósofo no campo
+  gera_filosofos(&no);
+  
   if(maximizador) { // esquerda
-    // Gera um filho para cada jogada possivel
-    // "o": acao de mover a bola
-    gera_pulos_direcao(&no, true); // esquerda
-    gera_pulos_direcao(&no, false); // direita
-
-    // "f": acao  de inserir um  novo filósofo no campo
-    gera_filosofos(&no);
-
     for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
-      printf("Filho: %s\n", f->no->campo);
+      printf("----------\nNo: %s\n", no->campo);
       printf("Jogada: %s\n", f->no->jogada);
+      printf("Filho: %s\n", f->no->campo);
+
+      printf("Chamou recursivo\n");
+      minimax(f->no, profundidade-1, maximizador);
+      printf("Voltou da recursão: %s\n", no->campo);
     }
   }
-
+  printf("\n");
   return 0;
 }
 

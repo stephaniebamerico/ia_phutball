@@ -114,5 +114,13 @@ void gera_pulos_direcao(No **no, bool esquerda) {
 
 // Gera um estado (filho) para cada filosofo que e possivel colocar em campo
 void gera_filosofos(No **no) {
-
+  for (int i = 0; i < (*no)->t_campo; i++) {
+    if ((*no)->campo[i] == VAZIO) {
+        No *novo_no;
+        copia_no(&novo_no, *no);
+        novo_no->campo[i] = FILOSOFO;
+        sprintf(novo_no->jogada, "e f %d", i);
+        insere_filho(&((*no)->filhos), novo_no);
+    }
+  }
 }
