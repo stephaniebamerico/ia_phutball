@@ -1,3 +1,6 @@
+#ifndef __UTILS__
+#define __UTILS__
+
 #include <stdbool.h>
 
 #define MAXSTR 512
@@ -10,13 +13,14 @@
 typedef struct No No;
 typedef struct Lista Lista;
 
+// Lista encadeada de nos (estados do campo)
 struct Lista {
   No *no;
   
   Lista *proximo;
 };
 
-
+// Estado do campo
 struct No {
   // Informacoes sobre o campo
   char *campo; // string do campo
@@ -29,11 +33,18 @@ struct No {
   Lista *filhos; // arvore do minimax
 };
 
+// Cria uma copia de src em dest (dest = src)
+void copia_no(No **dest, No *src);
+// Free(no)
+void libera_no(No **no);
 // Insere um filho (tabuleiro resultante de jogada) na lista de filhos do no
-void insereFilho(Lista **filhos, No *filho);
-// Estimativa TODO: EXPLICAR
-int heuristica(No *no);
+void insere_filho(Lista **filhos, No *filho);
+
 // Pula um grupo de filosofos por vez
 void pula(No *no, bool esquerda);
-// TODO: EXPLICAR
-int minimax(No *no, int profundidade, bool maximizador);
+// Gera um estado (filho) para cada pulo possivel em uma direcao
+void gera_pulos_direcao(No **no, bool esquerda);
+// Gera um estado (filho) para cada filosofo que e possivel colocar em campo
+void gera_filosofos(No **no);
+
+#endif

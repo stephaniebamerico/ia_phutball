@@ -1,72 +1,73 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "utils.h"
+#include "minimax.h"
 
-#define max(a,b) \
-({ __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a > _b ? _a : _b; })
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-/*ROTINA minimax(nó, profundidade, maximizador)
-    SE nó é um nó terminal OU profundidade = 0 ENTÃO
-        RETORNE o valor da heurística do nó
-    SENÃO SE maximizador é FALSE ENTÃO
-        α ← +∞
-        PARA CADA filho DE nó
-            α ← min(α, minimax(filho, profundidade-1,true))
-        FIM PARA
-        RETORNE α
-    SENÃO
-        //Maximizador
-        α ← -∞
-        //Escolher a maior dentre as perdas causadas pelo minimizador
-        PARA CADA filho DE nó
-            α ← max(α, minimax(filho, profundidade-1,false))
-        FIM PARA
-        RETORNE α
-    FIM SE
-FIM ROTINA*/
+// Cria uma copia de src em dest (dest = src)
+void copia_no(No **dest, No *src) {
+  (*dest) = (No *) malloc(sizeof(No));
+  (*dest)->campo = (char *) malloc(sizeof(char)*MAXSTR);
+  (*dest)->campo = strcpy((*dest)->campo, src->campo);
+  (*dest)->t_campo = src->t_campo;
+  (*dest)->p_bola = src->p_bola;
 
-void copia_no(No **novo_no, No *no) {
-  (*novo_no) = (No *) malloc(sizeof(No));
-  (*novo_no)->campo = (char *) malloc(sizeof(char)*MAXSTR);
-  (*novo_no)->campo = strcpy((*novo_no)->campo, no->campo);
-  (*novo_no)->t_campo = no->t_campo;
-  (*novo_no)->p_bola = no->p_bola;
-
-  (*novo_no)->jogada = (char *) malloc(sizeof(char)*MAXSTR);
-  (*novo_no)->filhos = NULL;
+  (*dest)->jogada = (char *) malloc(sizeof(char)*MAXSTR);
+  if(src->jogada != NULL)
+    strcpy((*dest)->jogada, src->jogada);
+  else
+    (*dest)->jogada[0] = '\0';
+  (*dest)->filhos = NULL;
 }
 
-void insereFilho(Lista **filhos, No *filho) {
+// Free(no)
+void libera_no(No **no) {
+  if(*no == NULL)
+    return;
+
+  if((*no)->campo != NULL)
+    free((*no)->campo);
+  if((*no)->jogada != NULL)
+    free((*no)->jogada);
+  if((*no)->filhos != NULL) {
+    Lista *aux = (*no)->filhos;
+    while(aux != NULL) {
+      libera_no(&(aux->no));
+      Lista *t = aux;
+      aux = aux->proximo;
+      free(t);
+    }
+  }
+  free(*no);
+}
+
+// Insere um filho (tabuleiro resultante de jogada) na lista de filhos do no
+void insere_filho(Lista **filhos, No *filho) {
     Lista *i;
     if((*filhos) == NULL) {
+      // Se nao ha filhos na lista, aloca o primeiro
 	    (*filhos) = (Lista *) malloc(sizeof(Lista));
         i = (*filhos);
     }
     else {
-        i = (*filhos);
-        while (i->proximo != NULL)
-            i = i->proximo;
+      // Se ja ha filhos na lista, aloca espaco no fim da lista
+      i = (*filhos);
+      while (i->proximo != NULL)
+          i = i->proximo;
 
-        i->proximo = (Lista *) malloc(sizeof(Lista));
-        i = i->proximo;        
+      i->proximo = (Lista *) malloc(sizeof(Lista));
+      i = i->proximo;        
     }
 
     i->no = filho;
     i->proximo = NULL;
 }
 
-int heuristica(No *no) {
-    // TODO: Heuristica :)
-    return 0;
-}
-
-// Faz um pulo por vez
+// Faz um pulo por vez na direcao indicada
 void pula(No *no, bool esquerda) {
-  // esquerda olha para a direta (+1)
-  // direita olha para a esquerda (-1)
+  // direta = +1
+  // esquerda = -1
   int sinal = esquerda ? 1 : -1;
   // posicao da antiga da bola no campo fica vazia
   no->campo[no->p_bola] = VAZIO;
@@ -84,36 +85,34 @@ void pula(No *no, bool esquerda) {
   no->p_bola = no->p_bola + (i*sinal);
 }
 
-int minimax(No *no, int profundidade, bool maximizador) {
-  if(no->p_bola == -1 || no->p_bola == no->t_campo || profundidade == 0)
-    return heuristica(no);
+// Gera um estado (filho) para cada pulo possivel em uma direcao
+void gera_pulos_direcao(No **no, bool esquerda) {
+  int direcao = esquerda ? 1 : -1;
 
-  if(maximizador) { // esquerda
-    No *novo_no;
-    copia_no(&novo_no, no);
+  No *novo_no;
+  copia_no(&novo_no, *no);
 
-    // Gera um filho para cada jogada possivel
-    // 1a jogada: pula quantas vezes for possivel
-    int n_pulos = 0;
-    int *p_pulos = (int *) malloc(sizeof(int)*MAXINT);
-    while(novo_no->campo[novo_no->p_bola+1] == FILOSOFO) {
-      pula(novo_no, maximizador);      
-      p_pulos[n_pulos] = novo_no->p_bola + 1;
-      ++n_pulos;
-    }
+  // Gera um filho para cada pulo possivel na direcao determinada
+  int n_pulos = 0;
+  int *p_pulos = (int *) malloc(sizeof(int)*MAXINT);
+  while(novo_no->campo[novo_no->p_bola+direcao] == FILOSOFO) {
+    pula(novo_no, esquerda);      
+    p_pulos[n_pulos] = novo_no->p_bola + 1;
+    ++n_pulos;
+
     // Cria a string para jogada de pulos no formato certo
     sprintf(novo_no->jogada, "e o %d", n_pulos);
     for (int i = 0; i < n_pulos; ++i)
       sprintf(novo_no->jogada, "%s %d", novo_no->jogada, p_pulos[i]);
-    insereFilho(&(no->filhos), novo_no);
-
-    // 2a jogada: coloca um filosofo
-
-    for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
-      printf("Filho: %s\n", f->no->campo);
-      printf("Jogada: %s\n", f->no->jogada);
-    }      
+    No *no_aux;
+    copia_no(&no_aux, novo_no);
+    insere_filho(&((*no)->filhos), no_aux);
   }
+  libera_no(&novo_no);
+  free(p_pulos);
+}
 
-  return 0;
+// Gera um estado (filho) para cada filosofo que e possivel colocar em campo
+void gera_filosofos(No **no) {
+
 }

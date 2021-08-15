@@ -4,6 +4,7 @@
 #include "campo.h"
 
 #include "utils.h"
+#include "minimax.h"
 
 int main(int argc, char **argv) {
   /*char buf[MAXSTR];
@@ -61,11 +62,12 @@ int main(int argc, char **argv) {
   int tam_campo = 13;
   No *no = (No *) malloc(sizeof(No));
   no->campo = (char *) malloc(sizeof(char)*MAXSTR);
-  strcpy(no->campo, "......of.ff.f");
+  strcpy(no->campo, ".fff.fof.ff.f");
   no->filhos = NULL;
   no->p_bola = tam_campo/2;
   no->t_campo = tam_campo;
   minimax(no, 1, true);
+  libera_no(&no);
   
   // prepara um string com o movimento
   // de inserir um filosofo na posicao 1 do campo
