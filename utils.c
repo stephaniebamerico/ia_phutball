@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Cria uma copia de src em dest (dest = src)
+// Cria uma copia de no src em no dest (dest = src)
 void copia_no(No **dest, No *src) {
   (*dest) = (No *) malloc(sizeof(No));
   (*dest)->campo = (char *) malloc(sizeof(char)*MAXSTR);
@@ -42,7 +42,7 @@ void libera_no(No **no) {
   free(*no);
 }
 
-// Insere um filho (tabuleiro resultante de jogada) na lista de filhos do no
+// Insere um filho (campo resultante de jogada) na lista de filhos do no
 void insere_filho(Lista **filhos, No *filho) {
     Lista *i;
     if((*filhos) == NULL) {
@@ -86,7 +86,7 @@ void pula(No *no, bool esquerda) {
 }
 
 // Gera um estado (filho) para cada pulo possivel em uma direcao
-void gera_pulos_direcao(No **no, bool esquerda) {
+void gera_pulos_direcao(No **no, bool maximizador, bool esquerda) {
   int direcao = esquerda ? 1 : -1;
 
   No *novo_no;
@@ -101,9 +101,14 @@ void gera_pulos_direcao(No **no, bool esquerda) {
     ++n_pulos;
 
     // Cria a string para jogada de pulos no formato certo
-    sprintf(novo_no->jogada, "e o %d", n_pulos);
+    if (maximizador)
+      sprintf(novo_no->jogada, "e");
+    else
+      sprintf(novo_no->jogada, "d");
+    sprintf(novo_no->jogada, "%s o %d", novo_no->jogada, n_pulos);
     for (int i = 0; i < n_pulos; ++i)
       sprintf(novo_no->jogada, "%s %d", novo_no->jogada, p_pulos[i]);
+    sprintf(novo_no->jogada, "%s\n", novo_no->jogada);
     No *no_aux;
     copia_no(&no_aux, novo_no);
     insere_filho(&((*no)->filhos), no_aux);
@@ -113,14 +118,46 @@ void gera_pulos_direcao(No **no, bool esquerda) {
 }
 
 // Gera um estado (filho) para cada filosofo que e possivel colocar em campo
-void gera_filosofos(No **no) {
+void gera_filosofos(No **no, bool maximizador) {
   for (int i = 0; i < (*no)->t_campo; i++) {
     if ((*no)->campo[i] == VAZIO) {
         No *novo_no;
         copia_no(&novo_no, *no);
         novo_no->campo[i] = FILOSOFO;
-        sprintf(novo_no->jogada, "e f %d", i);
+        
+        if(maximizador)
+          sprintf(novo_no->jogada, "e f %d\n", i+1);
+        else
+          sprintf(novo_no->jogada, "d f %d\n", i+1);
+        
         insere_filho(&((*no)->filhos), novo_no);
     }
   }
+}
+
+// Usa minimax para determinar melhor jogada
+No *melhor_jogada(No *no, char lado) {
+  int profundidade = profundidade_maxima(no->t_campo);
+  No *melhor_jogada = NULL;
+  if(lado == 'e') { // esquerda = maximizador
+    minimax(no, profundidade, true);
+    int max = MINIMO-1;
+    for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
+      if(max < f->no->h_valor) {
+          melhor_jogada = f->no;
+          max = f->no->h_valor;
+        }
+    }
+  }
+  else { // direita = minimizador
+    minimax(no, profundidade, false);
+    int min = MAXIMO+1;
+    for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
+      if(min > f->no->h_valor) {
+          melhor_jogada = f->no;
+          min = f->no->h_valor;
+        }
+    }
+  }
+  return melhor_jogada;
 }

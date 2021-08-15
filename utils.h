@@ -29,22 +29,24 @@ struct No {
 
   // Informacoes para o minimax
   char *jogada; // jogada que levou a esse estado
-  int pontuacao; // estimativa da heuristica
+  int h_valor; // estimativa da heuristica
   Lista *filhos; // arvore do minimax
 };
 
-// Cria uma copia de src em dest (dest = src)
+// Cria uma copia de no src em no dest (dest = src)
 void copia_no(No **dest, No *src);
 // Free(no)
 void libera_no(No **no);
-// Insere um filho (tabuleiro resultante de jogada) na lista de filhos do no
+// Insere um filho (campo resultante de jogada) na lista de filhos do no
 void insere_filho(Lista **filhos, No *filho);
 
 // Pula um grupo de filosofos por vez
 void pula(No *no, bool esquerda);
 // Gera um estado (filho) para cada pulo possivel em uma direcao
-void gera_pulos_direcao(No **no, bool esquerda);
+void gera_pulos_direcao(No **no, bool maximizador, bool esquerda);
 // Gera um estado (filho) para cada filosofo que e possivel colocar em campo
-void gera_filosofos(No **no);
+void gera_filosofos(No **no, bool maximizador);
 
+// Usa minimax para determinar melhor jogada
+No *melhor_jogada(No *no, char lado);
 #endif
