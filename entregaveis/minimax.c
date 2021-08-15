@@ -16,7 +16,6 @@ int heuristica(No *no, bool esquerda) {
   int heuristica = 0;
   int n_vazios;
   
-
   // Se nao existe um filosofo adjacente a bola na direcao do gol
   if (no->campo[no->p_bola+direcao] == VAZIO) 
     ++heuristica;
@@ -42,15 +41,17 @@ int heuristica(No *no, bool esquerda) {
       n_vazios = 0;
     }
   }
-
+  // Adiciona uma jogada para o pulo da bola ate o gol
   ++heuristica;
   return heuristica;
 }
 
 // Estima a diferenca entre a quantidade de jogadas que cada jogador
-// precisa ate fazer gol; quanto maior, melhor para esquerda (e vice-versa)
+// precisa ate fazer gol; se o gol ja foi feito, retorna um valor limite.
+// Quanto maior o valor, melhor para o maximizador (esquerda)
+// Quanto menor o valor, melhor para o minimizador (direita)
 int calcula_heuristica(No *no) {
-  if (no->p_bola == -1) // gol da direita ou esquerda
+  if (no->p_bola == -1) // gol da direita
     return MINIMO;
   if (no->p_bola == no->t_campo) // gol da esquerda
     return MAXIMO;
@@ -60,6 +61,7 @@ int calcula_heuristica(No *no) {
 
 // Minimax ja montando a string da jogada para cada estado calculado
 int minimax(No *no, int profundidade, bool maximizador) {
+  // Se ja fez gol ou se chegou na profundidade limite, retorna a heuristica
   if(no->p_bola == -1 || no->p_bola == no->t_campo || profundidade == 0)
     return calcula_heuristica(no);
     
@@ -76,9 +78,6 @@ int minimax(No *no, int profundidade, bool maximizador) {
     for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
       f->no->h_valor = minimax(f->no, profundidade-1, !maximizador);
       maximo = max(maximo, f->no->h_valor);
-
-      //if(maximo == MAXIMO) // poda: achou melhor caso, nao precisa mais procurar
-      //  return maximo;
     }
     return maximo;
   }
@@ -88,9 +87,6 @@ int minimax(No *no, int profundidade, bool maximizador) {
     for (Lista *f = no->filhos; f != NULL; f = f->proximo) {
       f->no->h_valor = minimax(f->no, profundidade-1, !maximizador);
       minimo = min(minimo, f->no->h_valor);
-
-      //if(minimo == MINIMO) // poda: achou melhor caso, nao precisa mais procurar
-      //  return minimo;
     }
     return minimo;
   }
@@ -98,6 +94,7 @@ int minimax(No *no, int profundidade, bool maximizador) {
 
 // Retorna profundidade maxima para tam_campo
 int profundidade_maxima(int tam_campo) {
+  // Os valores foram determinados com base em testes
   if(tam_campo <= 7)
     return 10;
   if(tam_campo <= 9)

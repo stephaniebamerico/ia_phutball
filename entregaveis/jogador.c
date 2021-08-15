@@ -25,9 +25,12 @@ int main(int argc, char **argv) {
   sscanf(strtok(NULL, " \n"), "%d", &(no->t_campo));
   sscanf(strtok(NULL, " \n"), "%s", no->campo);
 
+  // Encontra a posicao da bola no campo
   for(no->p_bola = 0; no->campo[no->p_bola] != BOLA; ++no->p_bola);
 
+  // Encontra a melhor jogada (com minimax)
   No *jogada = melhor_jogada(no, lado_meu); 
+  printf("Jogada: %s\n", jogada->jogada);
  
   // envia o movimento para o controlador do campo
   campo_envia(jogada->jogada);

@@ -20,7 +20,9 @@
 int heuristica(No *no, bool esquerda);
 
 // Estima a diferenca entre a quantidade de jogadas que cada jogador
-// precisa ate fazer gol; quanto maior, melhor para esquerda (e vice-versa)
+// precisa ate fazer gol; se o gol ja foi feito, retorna um valor limite.
+// Quanto maior o valor, melhor para o maximizador (esquerda)
+// Quanto menor o valor, melhor para o minimizador (direita)
 int calcula_heuristica(No *no);
 
 // Minimax ja montando a string da jogada para cada estado calculado

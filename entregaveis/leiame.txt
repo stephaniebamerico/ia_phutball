@@ -1,0 +1,130 @@
+﻿==== TRABALHO 2 - INTELIGÊNCIA ARTIFICIAL ====
+Implementação de um jogador artificial para o jogo “Futebol dos Filósofos" em uma dimensão.
+
+Alunos: Giovani Gurkevicz Marciniak (GRR20182981)
+        Stephanie Briere Americo (GRR20165313)
+Data: 15/8/2021
+
+==== REQUISITOS ====
+Utilizamos os arquivos campo.h e campo.c fornecidos pelo professor. Ambos já estão inclusos 
+no tar.gz, pois são necessários para compilação da solução.
+
+==== PARA EXECUTAR ====
+1- Compile com o comando
+$ make
+
+2- Execute com o comando
+$ ./jogador <lado do campo>
+
+<lado do campo> podendo ser:
+- e se for o lado esquerdo
+- d se for o lado direito
+
+==== ESTRUTURA DOS ARQUIVOS ====
+O trabalho contém os seguintes arquivos:
+
+- jogador.c
+Inclui a função main do programa. Recebe e trata as entradas do controlador, chama a função 
+que calcula a melhor jogada e envia o resultado para o controlador.
+
+- utils.c utils.h
+Contém definição das estruturas que simulam a árvore do minimax, além das funções auxiliares 
+de manipulação dessas estruturas e de ações no jogo. Uma breve descrição das funções auxiliares 
+pode ser encontrada no arquivo utils.h.
+   - As estruturas são:
+      - No: nó da árvore, representa um estado do campo do jogo;
+      - Lista: lista encadeada, armazena dos filhos do nó.
+
+- minimax.c minimax.h
+Contém as funções que implementam o algoritmo minimax, a heurística definida e uma estimativa 
+da profundidade máxima para a árvore gerada pelo minimax conforme o tamanho do tabuleiro 
+(considerando que a melhor jogada deve ser determinada em até 5 segundos).
+
+
+==== FUNCIONALIDADE DO PROGRAMA ====
+A solução implementada utiliza o algoritmo Minimax para decidir, dado o estado atual do campo, 
+a melhor jogada possível (com base na heurística determinada). A heurística é utilizada para 
+estimar a chance de uma determinada jogada resultar em vitória ou derrota, especialmente 
+importante quando não é possível expandir a árvore até as folhas (resultados do jogo). 
+Explicaremos mais sobre a heurística utilizada na seção abaixo.
+
+Para cada possibilidade de ação do jogador, sendo elas a de mover a bola ou de colocar um 
+filósofo em uma posição, a função Minimax será chamada até atingir uma determinada profundidade. 
+A profundidade máxima foi definida através de testes que resultaram em uma média de tempo para a 
+execução do algoritmo, variando o tamanho do campo e a profundidade. Desta forma, definimos a maior 
+profundidade para cada tamanho de campo, de forma que a média do tempo de execução esteja abaixo de 
+5 segundos.
+
+==== HEURÍSTICA ====
+Em nossa busca por uma boa heurística, nos deparamos com o artigo “One-Dimensional Phutball” (2002) [1], 
+no qual Grossman e Nowakowski afirmam que o problema “One-Dimensional Phutball” (mesmo problema tratado 
+nesse trabalho) é NP-Completo. Nossas suspeitas de que as estratégias mais intuitivas não são sempre as 
+melhores foram confirmadas após a leitura do artigo. Isso é especialmente verdade em casos que a melhor 
+jogada é mover a bola na direção oposta ao gol.
+Os autores propõem uma solução para o problema que, nas palavras deles, “quase funciona”. A solução não 
+funciona justamente nos casos mais contra-intuitivos - a melhor jogada é pular em direção ao “gol contra”. 
+Utilizamos essa solução simplificada como inspiração para a nossa heurística. Consequentemente, nossa 
+heurística não funciona muito bem nos mesmos casos, conforme explicaremos abaixo. 
+
+Nossa heurística consiste na diferença entre distância estimada (em número de jogadas) da vitória para 
+cada jogador, i.e.:
+H = L - R 
+onde,
+- H é a heurística final;
+- L é a distância que o lado esquerdo está da vitória;
+- R é a distância que o lado direito está da vitória.
+Com “a distância da vitória”, queremos dizer a quantidade estimada de jogadas necessárias para fazer gol.
+
+
+O cálculo da distância estimada ocorre da seguinte maneira:
+1 - Se não existe um filósofo na borda do gol, distância += 1;
+  ....o -> f..o (filósofo necessário para pular até o gol)
+2 - Se não existe um filósofo na posição adjacente à bola na direção do gol, distância += 1;
+  f...o -> f..fo (filósofo necessário para pular até o gol)
+3 - A cada 2 posições vazias (‘.’) na direção do gol, distância += 1
+(as posições adjacentes à bola e ao gol não são consideradas)
+  f..fo -> f.ffo (filósofo necessário para pular até o gol)
+4 - Para o pulo necessário até o gol, distância += 1.
+  f.ffo -> ..... (pulo necessário até o gol)
+
+Por exemplo, no seguinte campo:
+  ....fo..f.f
+
+R = 3, pois: (note que o gol é a borda do campo à esquerda)
+   1 - É necessário adicionar um filósofo na borda do gol: |f|...fo..f.f, R = 1; 
+   2 - *Não* é necessário adicionar um filósofo adjacente à gola em direção ao gol (à esquerda): 
+  	f...|f|o..f.f, R = 1;
+   3 - É necessário adicionar um filósofo entre a bola e o gol: 
+   	f.|f|.fo..f.f, R = 2;
+   4 - Resta considerar o pulo: 
+   	........f.f, R = 3.
+
+L = 2, pois: (note que o gol é a borda do campo à direita)
+   1 - *Não* é necessário adicionar um filósofo na borda do gol: 
+   	....fo..f.|f|, L = 0;
+   2 - É necessário adicionar um filósofo adjacente à gola em direção ao gol: 
+   	....fo|f|.f.f, L = 1;
+   3 - *Não* é necessário adicionar um filósofo entre a bola e o gol: 
+   	....fof.|f|.f, L = 1;
+   4 - Resta considerar o pulo: 
+   	....f......, L = 2.
+
+Então H = R - L = 3 - 2 = 1, o que indica que R precisa de mais jogadas do que L para chegar até o gol.
+
+Não é difícil de notar alguns dos problemas dessa heurística:
+- subestima a quantidade de jogadas necessárias para a vitória, pois só considera o número de ações 
+necessárias para fazer gol no estado atual do campo, sem as jogadas do adversário; como é um jogo em 
+turnos, isso é ingênuo.
+- olha apenas para parte do campo (entre a bola e o gol), desconsiderando estratégias que recuem na 
+direção contrária ao gol; já estabelecemos que, muitas vezes, as melhores jogadas terão esse comportamento.
+
+==== PROBLEMAS ====
+Notamos que, por conta das limitações da heurística, nosso algoritmo demonstra um verdadeiro exemplo de 
+estupidez artificial. Por exemplo, em uma situação em que o adversário está muito próximo de fazer gol e 
+não há como ganhar o jogo se movendo em direção ao gol, a heurística apenas retornará que o jogo está 
+perdido para todos os estados. Nesse caso, qualquer jogada será selecionada. Por esse motivo, notamos 
+que ele até mesmo tenta fazer “gol contra”.
+
+==== REFERÊNCIA ====
+[1] Link para o artigo “One-Dimensional Phutball” (2002) de J. P. Grossman e Richard J. Nowakowski:
+http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=9484E554B8551003656A138F3692D049?doi=10.1.1.8.279&rep=rep1&type=pdf
