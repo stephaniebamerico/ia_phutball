@@ -14,8 +14,10 @@
     _a < _b ? _a : _b; })
 
 // Estimativa TODO: EXPLICAR
-int heuristica(No *no);
+int heuristica(No *no, bool esquerda);
 // TODO: EXPLICAR
 int minimax(No *no, int profundidade, bool maximizador);
+// TODO: Explicar
+int calcula_heuristica(No *no);
 
 #endif
